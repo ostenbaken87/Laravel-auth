@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,16 +19,26 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|unique:users|max:255',
-            'password' => 'required|confirmed|min:4'
+            'password' => 'required|confirmed|min:4',
+            'password_confirmation' => 'required|min:4'
         ]);
 
-        User::create($request->all());
+        $user = User::create($request->all());
 
-        return redirect()->route('login')->with('success', 'Your account has been created.');
+        event(new Registered($user));
+
+        Auth::login($user);
+
+        return redirect()->route('verification.notice');
     }
 
     public function login()
     {
         return view('user.login');
+    }
+
+    public function dashboard()
+    {
+        return view('user.dashboard');
     }
 }
